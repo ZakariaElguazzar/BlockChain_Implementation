@@ -2,15 +2,16 @@ import hashlib
 from datetime import datetime
 import Transaction
 from ecdsa import SECP256k1,SigningKey
+import Blockchain
 
 class Block:
+
     index_counter = 0
-    difficulty = 4  # You can adjust the difficulty here
 
     def __init__(self):
         Block.index_counter += 1
         self.index = Block.index_counter
-        self.previous_hash = None
+        self.previous_hash = Blockchain.get_last_block().actual_hash
         self.actual_hash = None
         self.date = datetime.now()
         self.data = []  # Initialize as a list to hold transactions
@@ -28,14 +29,16 @@ class Block:
         Mine the block by finding a nonce that produces a hash with the specified difficulty.
         """
         self.nonce = 0
-        self.date = datetime.now()
 
         while True:
             hashed = self.hash()
-            if hashed.startswith('0' * Block.difficulty):
+            if hashed.startswith('0' * Blockchain.difficulty):
                 self.actual_hash = hashed
                 break
             self.nonce += 1
+        Blockchain.adjust_difficulty()
+        
+        
 
     def verify_hash(self):
         """
@@ -51,7 +54,7 @@ class Block:
         """
         Verify that the block hash meets the difficulty requirement.
         """
-        if not self.hash().startswith('0' * Block.difficulty):
+        if not self.hash().startswith('0' * Blockchain.difficulty):
             raise ValueError("Hash does not meet difficulty requirement.")
         return True
 
@@ -78,7 +81,6 @@ class Block:
         return True
 
 block1 = Block()
-block1.difficulty = 4
 sender_address = SigningKey.generate(curve=SECP256k1).get_verifying_key()
 receiver_address = SigningKey.generate(curve=SECP256k1).get_verifying_key()
 print("Sender address:", type(sender_address))
